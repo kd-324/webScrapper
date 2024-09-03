@@ -1,0 +1,20 @@
+How to start the application?
+The application can be started either by running main.py file, or by executing the start.sh file.
+
+Where are images stored?
+Images are stored in assets folder
+
+Currently, the primary storage is a file, and cache is in-memory data structure. Data layer has an interface, whose one
+implementation is file based, but a db based implementation can also be done.
+
+--------API end points--------
+1. Start web scrapping
+curl --location 'localhost:8000/scrape' \
+--header 'Content-Type: application/json' \
+--data '{
+    "page_count": 3,
+    "proxy_string": "https://dentalstall.com/shop"
+}'
+
+2. Fet product details
+curl --location 'localhost:8000/products'
