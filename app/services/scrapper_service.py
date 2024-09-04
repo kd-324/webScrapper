@@ -4,7 +4,7 @@ from app.models.product import Product
 from httpx import AsyncClient
 import re
 
-from app.utils.dependencies import get_scrapper_dao
+from app.utils.dependencies import get_scrapper_dao, get_notification_service
 
 JsonType = Dict[str, Any]
 
@@ -12,6 +12,7 @@ class ScrapperService:
 
     def __init__(self):
         self.scrapper_dao = get_scrapper_dao()
+        self.notification_service = get_notification_service()
     async def scrape_website(self, page_count: int, proxy_string: str) -> None:
         products_to_update = await self.scrape_webpage(proxy_string)
 
@@ -20,6 +21,8 @@ class ScrapperService:
             products_to_update.extend(products_at_next_page)
 
         self.scrapper_dao.update_product_details(products_to_update)
+        self.notification_service.notify_user('user123')
+
 
 
     async def scrape_webpage(self, proxy_string: str) -> List[Product]:
