@@ -11,10 +11,12 @@ implementation is file based, but a db based implementation can also be done.
 1. Start web scrapping
 curl --location 'localhost:8000/scrape' \
 --header 'Content-Type: application/json' \
+--header 'Authorization: Bearer f4e97a16-e96a-47a8-acdd-089f77c7e8a4' \
 --data '{
-    "page_count": 3,
+    "page_count": 3, 
     "proxy_string": "https://dentalstall.com/shop"
 }'
 
 2. Fet product details
-curl --location 'localhost:8000/products'
+curl --location 'localhost:8000/products' \
+--header 'Authorization: Bearer f4e97a16-e96a-47a8-acdd-089f77c7e8a4'
