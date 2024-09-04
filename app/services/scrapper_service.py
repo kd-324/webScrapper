@@ -1,7 +1,10 @@
 from typing import Dict, Any, List
 from bs4 import BeautifulSoup
+
+from app.constants.constants import MAX_RETRIES, RETRY_DELAY
 from app.models.product import Product
-from httpx import AsyncClient
+from httpx import AsyncClient, RequestError, HTTPStatusError
+import asyncio
 import re
 
 from app.utils.dependencies import get_scrapper_dao, get_notification_service
@@ -29,17 +32,27 @@ class ScrapperService:
         product_list_in_db = self.scrapper_dao.get_product_details()
         products_to_update = []
 
-        async with AsyncClient() as client:
-            response = await client.get(proxy_string)
-            product_list = self.extract_product_details(response.content)
+        for attempt in range(1, MAX_RETRIES+1):
+            try:
+                async with AsyncClient() as client:
+                    response = await client.get(proxy_string)
+                    product_list = self.extract_product_details(response.content)
 
-            for product in product_list:
-                if (product.product_title in product_list_in_db
-                        and product_list_in_db[product.product_title]['product_price'] == product.product_price):
-                    continue
+                    for product in product_list:
+                        if (product.product_title in product_list_in_db
+                                and product_list_in_db[product.product_title]['product_price'] == product.product_price):
+                            continue
+                        else:
+                            product.path_to_image = await self.save_image_to_local(product.product_title, product.path_to_image)
+                            products_to_update.append(product)
+
+            except (HTTPStatusError, RequestError) as e:
+                if attempt < MAX_RETRIES:
+                    print(f"Attempt {attempt} failed: {e}. Retrying in {RETRY_DELAY} seconds...")
+                    await asyncio.sleep(RETRY_DELAY)
                 else:
-                    product.path_to_image = await self.save_image_to_local(product.product_title, product.path_to_image)
-                    products_to_update.append(product)
+                    print("Max retries reached. Request failed.")
+                    raise
 
         return products_to_update
 
